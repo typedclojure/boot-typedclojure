@@ -1,9 +1,10 @@
-(ns typedclojure.boot)
+(ns typedclojure.boot
+  {:boot/export-tasks true}
   (:require [boot.core :as core]
             [typedclojure.boot.infer :as infer]
             [clojure.java.io :as io]
             [clojure.tools.namespace.find :refer [find-namespaces-in-dir]]
-            [adzerk.boot-test :as bt])
+            [adzerk.boot-test :as bt]))
 
 (core/deftask spec-infer
   "Run clojure.test tests in a pod. Throws on test errors or failures.
@@ -23,7 +24,11 @@
   the target to be synced even when there are test errors or failures.
 
   The --infer-ns option specifies Clojure namespace that will be inferred for
-  specs during unit testing."
+  specs during unit testing.
+
+  The --test-timeout-ms option specifies a timeout (in milliseconds) that will be
+  applied to each individual unit test during execution.
+  "
   [c clojure    VERSION   str    "the version of Clojure for testing."
    n namespaces NAMESPACE #{sym} "The set of namespace symbols to run tests in."
    e exclusions NAMESPACE #{sym} "The set of namespace symbols to be excluded from test."
@@ -41,15 +46,10 @@
     (assert (symbol? infer-ns) "Must provide --infer-ns option")
     (comp
       (core/with-pre-wrap fileset
-        (infer/pre-startup
-          infer-ns)
+        (infer/pre-startup infer-ns :spec test-timeout-ms)
         fileset)
       (bt/test
-        :requires (into #{'typedclojure.boot.infer}
-                        (concat requires 
-                                (when instrument
-                                  (assert ((every-pred symbol? namespace) instrument))
-                                  [(symbol (namespace instrument))])))
+        :requires (into #{'typedclojure.boot.infer} requires)
         :startup (into `#{infer/startup} startup)
         :shutdown (into `#{infer/shutdown} shutdown)
         :clojure clojure

@@ -43,7 +43,7 @@
 (defn monkeypatch-test-var [test-timeout-ms]
   (alter-var-root #'test/test-var 
                   (constantly (fn [& args] 
-                                (-> (test-var test-timeout-ms)
+                                (-> (test-var-with-timeout test-timeout-ms)
                                     (apply args))))))
 
 
@@ -52,8 +52,8 @@
   (let [{:keys [:infer-ns :infer-kind :test-timeout-ms]} (read-string (slurp infer-ns-config))
         _ (assert (symbol? infer-ns))
         _ (assert (#{:type :spec} infer-kind))
-        _ (t/prepare-infer-ns infer-ns)
-				_ (monkeypatch-test-var test-timeout-ms)]
+        _ (t/prepare-infer-ns :ns infer-ns)
+        _ (monkeypatch-test-var test-timeout-ms)]
     ;(prn "end startup")
     nil))
 

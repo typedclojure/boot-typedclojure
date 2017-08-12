@@ -1,10 +1,10 @@
 # boot-typedclojure
 
 ```
-[org.typedclojure/boot-typedclojure "0.4.0"]
+[org.typedclojure/boot-typedclojure "0.1.0-SNAPSHOT"]
 ```
 
-Plugin for boot to use Typed Clojure.
+A boot Plugin for Typed Clojure.
 
 ## Usage
 

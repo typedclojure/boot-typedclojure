@@ -1,7 +1,7 @@
 (def version "0.1.0-SNAPSHOT")
 
 (task-options!
- pom {:project 'org.typedclojure/boot-typed
+ pom {:project 'org.typedclojure/boot-typedclojure
       :version version
       :description "Boot plugin for Typed Clojure"}
  push {:repo-map {:url "https://clojars.org/repo/"}})
