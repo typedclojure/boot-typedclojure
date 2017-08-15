@@ -5,7 +5,7 @@
 
 (def infer-ns-config ".boot-typedclojure-infer-ns")
 
-(defn pre-startup [infer-ns infer-kind test-timeout-ms]
+(defn pre-startup [infer-ns infer-kind test-timeout-ms infer-opts]
   {:pre [(symbol? infer-ns)
          (#{:type :spec} infer-kind)
          ((some-fn nil? integer?) test-timeout-ms)]}
@@ -14,7 +14,8 @@
         (binding [*print-dup* true]
           (pr-str {:infer-ns infer-ns
                    :infer-kind infer-kind
-                   :test-timeout-ms test-timeout-ms}))))
+                   :test-timeout-ms test-timeout-ms
+                   :infer-opts infer-opts}))))
 
 ;; from https://stackoverflow.com/a/27550676
 (defn exec-with-timeout [timeout-ms callback]
@@ -59,12 +60,13 @@
 
 (defn shutdown []
   ;(prn "shutdown")
-  (let [{:keys [:infer-ns :infer-kind]} (read-string (slurp infer-ns-config))
+  (let [{:keys [:infer-ns :infer-kind :infer-opts]} (read-string (slurp infer-ns-config))
         _ (assert (symbol? infer-ns))
         _ (assert (#{:type :spec} infer-kind))
         infer-fn (case infer-kind
                    :type t/runtime-infer
                    :spec t/spec-infer)]
-    (infer-fn :ns infer-ns)
+    (apply infer-fn :ns infer-ns :out-dir (str "infer-" (name infer-kind))
+           (apply concat infer-opts))
     ;(prn "end shutdown")
     nil))

@@ -39,14 +39,15 @@
    s shutdown   FN        #{sym} "functions to be called prior to pod shutdown"
    S startup    FN        #{sym} "functions to be called at pod startup"
    j junit-output-to JUNITOUT str "The directory where a junit formatted report will be generated for each ns"
-   t infer-ns		INFER sym "The namespace symbol to run spec inference on"
+   t infer-ns  INFER sym "The namespace symbol to run spec inference on"
    m test-timeout-ms  TIMEOUT int "Timeout for a single test (milliseconds). Default: No timeout."
+   o infer-opts OPTS edn "Map of options to pass to clojure.core.typed/spec-infer"
    ]
   (let []
     (assert (symbol? infer-ns) "Must provide --infer-ns option")
     (comp
       (core/with-pre-wrap fileset
-        (infer/pre-startup infer-ns :spec test-timeout-ms)
+        (infer/pre-startup infer-ns :spec test-timeout-ms infer-opts)
         fileset)
       (bt/test
         :requires (into #{'typedclojure.boot.infer} requires)
