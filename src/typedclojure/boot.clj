@@ -101,13 +101,18 @@
    j junit-output-to JUNITOUT str "The directory where a junit formatted report will be generated for each ns"
    t infer-ns  INFER sym "The namespace symbol to run spec inference on"
    m test-timeout-ms  TIMEOUT int "Timeout for a single test (milliseconds). Default: No timeout."
+   l load-infer-results FILE str "If non-nil, a file to load existing inference results from. Disables unit tests. Default: nil."
    o infer-opts OPTS edn "Map of options to pass to clojure.core.typed/spec-infer"
    ]
   (let []
     (assert (symbol? infer-ns) "Must provide --infer-ns option")
     (comp
       (core/with-pre-wrap fileset
-        (infer/pre-startup infer-ns :type test-timeout-ms infer-opts)
+        (infer/pre-startup {:infer-ns infer-ns
+                            :infer-kind :type
+                            :test-timeout-ms test-timeout-ms
+                            :load-infer-results load-infer-results
+                            :infer-opts infer-opts})
         fileset)
       (bt/test
         :requires (into #{'typedclojure.boot.infer} requires)
