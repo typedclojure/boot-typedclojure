@@ -15,8 +15,35 @@
         (binding [*print-dup* true]
           (pr-str opts))))
 
+;; from https://github.com/flatland/clojail/blob/master/src/clojail/core.clj#L40
+(defn thunk-timeout
+  "Takes a function and an amount of time to wait for thse function to finish
+   executing. The sandbox can do this for you. unit is any of :ns, :us, :ms,
+   or :s which correspond to TimeUnit/NANOSECONDS, MICROSECONDS, MILLISECONDS,
+   and SECONDS respectively."
+  ([thunk ms]
+     (thunk-timeout thunk ms :ms nil)) ; Default to milliseconds, because that's pretty common.
+  ([thunk time unit]
+     (thunk-timeout thunk time unit nil))
+  ([thunk time unit tg]
+     (let [task (FutureTask. thunk)
+           thr (if tg (Thread. tg task) (Thread. task))]
+       (try
+         (.start thr)
+         (.get task time (or (uglify-time-unit unit) unit))
+         (catch TimeoutException e
+           (.cancel task true)
+           (.stop thr) 
+           (throw (TimeoutException. "Execution timed out.")))
+         (catch Exception e
+           (.cancel task true)
+           (.stop thr) 
+           (throw e))
+         (finally (when tg (.stop tg)))))))
+
+
 ;; from https://stackoverflow.com/a/27550676
-(defn exec-with-timeout [timeout-ms callback]
+#_(defn exec-with-timeout [timeout-ms callback]
 	(let [fut (future (callback))
 				ret (deref fut timeout-ms ::timed-out)]
 		(when (= ret ::timed-out)
@@ -34,7 +61,7 @@
           (test/do-report {:type :begin-test-var, :var v})
           (test/inc-report-counter :test)
           (try (if-some [timeout test-timeout-ms]
-                 (exec-with-timeout timeout t)
+                 (thunk-timeout t timeout) #_(exec-with-timeout timeout t)
                  (t))
                (catch Throwable e
                  (test/do-report
